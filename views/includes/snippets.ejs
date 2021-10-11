@@ -1,0 +1,15 @@
+<% posts.forEach(function(post){ %>
+<div>
+    <%= post.title %><br>
+    <%= post.description %><br>
+    <%= post.images[0].originalname %><br>
+    <%= post.author %><br>
+    <%= post.images[0].smallPathFilePart
+
+        <% post.images.forEach(function(image){ %>
+    Small<img src="<%= image.smallPathFilePart %>">
+    Medium<img src="<%= image.mediumPathFilePart %>">
+    Large<img src="<%= image.largePathFilePart %>">
+    <% }) %>
+</div><br>
+<% }) %>

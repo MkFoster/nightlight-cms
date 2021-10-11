@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            display: grid;
+            /* This defines the number of horizontal columns and how wide they all are */
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* portrait phones */
+        @media (max-width: 450px) {
+            body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .main-image {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1><%= post.title %></h1>
+        <time datetime="<%= post.postDate.toString() %>">
+            <%= post.postDate.toString() %>
+        </time>
+        <p><%= post.description %></p>
+    </article>
+    <img src="/<%= post.images[0].mediumPathFilePart %>" class="main-image">
+</body>
+
+</html>
