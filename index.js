@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const flash = require('connect-flash');
 const sharp = require('sharp');
 const fs = require('fs');
+const util = require('util');
 
 require('dotenv').config({path: 'variables.env'});
 
@@ -29,6 +30,18 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+//Serve static content  I.e., http://localhost/test.html
+app.use(express.static('./static'));
+
+app.use(flash());
+
+//Use EJS templates for pages with dynamic content
+app.set('view engine', 'ejs');
+app.set('views', './views');
 
 require('./models/Post');
 require('./models/User');
@@ -66,15 +79,6 @@ const largeImagePathPart = 'images/large/';
     }
 })();
 
-//Serve static content  I.e., http://localhost/test.html
-app.use(express.static('./static'));
-
-app.use(flash());
-
-//Use EJS templates for pages with dynamic content
-app.set('view engine', 'ejs');
-app.set('views', './views');
-
 app.get('/', async (request, response) => {
     try {
         const posts = await Post.find();
@@ -108,26 +112,34 @@ app.get('/register', (request, response) => {
 });
 
 app.post('/register',
-    body('name', 'Please enter your name').notEmpty(),
-    body('email', 'Please enter a valid email address').isEmail().normalizeEmail({
+    body('name').notEmpty().withMessage('Please enter your name.'),
+    body('email').isEmail().withMessage('Please enter a valid email address.').normalizeEmail({
         remove_dots: false,
         remove_extension: false,
         gmail_remove_subaddress: false
     }),
-    body('password', 'Password Cannot be Blank!').notEmpty().isLength({ min: 8 }).isLength({ max: 100 }),
-    body('password-confirm', 'Confirmed Password cannot be blank!').notEmpty(),
-    body('password-confirm', 'Oops! Your passwords do not match').equals(body.password),
-     (request, response) => {
-        //next();
+    body('password').notEmpty().withMessage('Password Cannot be Blank!').isLength({ min: 8 }).withMessage('Password must be 8 to 40 characters.').isLength({ max: 40 }).withMessage('Password must be 8 to 40 characters.'),
+    body('passwordconfirm').notEmpty().withMessage('Confirmed Password cannot be blank!'),
+    async (request, response) => {
         const result = validationResult(request);
-        if (Array.isArray(result?.errors) && result?.errors.length > 0) {
+        if (!Array.isArray(result.errors)) {
+            result.errors = [];
+        }
+        console.log(request.body);
+        if (request.body.password !== request.body.passwordconfirm) {
+            result.errors.push({msg: 'The confirm password does not match.'});
+        }
+        if (result.errors.length > 0) {
             console.log(result.errors.map(err => err.msg));
             //request.flash('error', result.errors); //result.errors.map(err => err.msg)
             response.render('pages/register', {title: 'Register', body: request.body, errors: result.errors});
             //response.redirect('/register');
             return; // stop the fn from running
         }
-        console.log('worked!!');
+        const user = new User({name: request.body.name, email: request.body.email});
+        await user.setPassword(request.body.password);
+        await user.save();
+        response.send('it works');
 });
 
 app.get('/newpost', (request, response) => {

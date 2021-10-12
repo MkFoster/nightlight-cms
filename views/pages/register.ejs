@@ -9,10 +9,11 @@
 </head>
 
 <body>
-
-    <% errors?.forEach(function(err){ %>
+    <% if (typeof errors !== 'undefined') { %>
+    <% errors.forEach(function(err){ %>
     <p><%= err.msg %></p>
     <% }) %>
+    <% } %>
     <form action="/register" method="POST">
         <h2>Register</h2>
         <label for="name">Name</label>
@@ -21,8 +22,8 @@
         <input type="email" name="email" required><br>
         <label for="password">Password</label>
         <input type="password" name="password"><br>
-        <label for="password-confirm">Confirm Password</label>
-        <input type="password" name="password-confirm"><br>
+        <label for="passwordconfirm">Confirm Password</label>
+        <input type="password" name="passwordconfirm"><br>
         <input type="submit" value="Register">
     </form>
 </body>
