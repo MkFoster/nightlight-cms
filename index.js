@@ -79,36 +79,44 @@ const largeImagePathPart = 'images/large/';
     }
 })();
 
-app.get('/', async (request, response) => {
+app.get('/', async (req, res) => {
     try {
         const posts = await Post.find();
-        response.render('pages/index', {posts: posts});
+        res.render('pages/index', {posts: posts});
     } catch(err) {
         console.error('failed');
         console.error(err);
     }
 });
 
-app.get('/post/:id', async (request, response) => {
-    const post = await Post.findOne({ _id: request.params.id });
-    response.render('pages/post', {post: post});
+app.get('/post/:id', async (req, res) => {
+    const post = await Post.findOne({ _id: req.params.id });
+    res.render('pages/post', {post: post});
 });
 
-app.get('/dash', (request, response) => {
-    response.render('pages/dash');
+app.get('/dash', (req, res) => {
+    if (req.user) {
+        res.render('pages/dash');
+    } else {
+        res.redirect('/login');
+    }
 });
 
-app.get('/login', (request, response) => {
-    response.render('pages/login');
+app.get('/login', (req, res) => {
+    res.render('pages/login');
 });
 
-app.post('/loginsubmit', (request, response) => {
-    console.log(request.body);
-});
+app.post('/login', passport.authenticate('local', { successRedirect: '/dash',
+                                                    failureRedirect: '/login' }));
 
-app.get('/register', (request, response) => {
-    const flashes = request.flash();
-    response.render('pages/register', {errorFlashes: flashes.error});
+app.get('/logout', function(req, res){
+    req.logout();
+    res.redirect('/');
+    });
+
+app.get('/register', (req, res) => {
+    const flashes = req.flash();
+    res.render('pages/register', {errorFlashes: flashes.error});
 });
 
 app.post('/register',
@@ -120,61 +128,68 @@ app.post('/register',
     }),
     body('password').notEmpty().withMessage('Password Cannot be Blank!').isLength({ min: 8 }).withMessage('Password must be 8 to 40 characters.').isLength({ max: 40 }).withMessage('Password must be 8 to 40 characters.'),
     body('passwordconfirm').notEmpty().withMessage('Confirmed Password cannot be blank!'),
-    async (request, response) => {
-        const result = validationResult(request);
+    async (req, res) => {
+        const result = validationResult(req);
         if (!Array.isArray(result.errors)) {
             result.errors = [];
         }
-        console.log(request.body);
-        if (request.body.password !== request.body.passwordconfirm) {
+        if (req.body.password !== req.body.passwordconfirm) {
             result.errors.push({msg: 'The confirm password does not match.'});
         }
         if (result.errors.length > 0) {
             console.log(result.errors.map(err => err.msg));
-            //request.flash('error', result.errors); //result.errors.map(err => err.msg)
-            response.render('pages/register', {title: 'Register', body: request.body, errors: result.errors});
-            //response.redirect('/register');
+            //req.flash('error', result.errors); //result.errors.map(err => err.msg)
+            res.render('pages/register', {title: 'Register', body: req.body, errors: result.errors});
+            //res.redirect('/register');
             return; // stop the fn from running
         }
-        const user = new User({name: request.body.name, email: request.body.email});
-        await user.setPassword(request.body.password);
+        const user = new User({name: req.body.name, email: req.body.email});
+        await user.setPassword(req.body.password);
         await user.save();
-        response.send('it works');
+        res.redirect('/login');
 });
 
-app.get('/newpost', (request, response) => {
-    response.render('pages/newpost');
+app.get('/newpost', (req, res) => {
+    if (req.user) {
+        res.render('pages/newpost');
+    } else {
+        res.redirect('/login');
+    }
 });
 
-/*app.get('/postsubmit', (request, response) => {
-    response.render('pages/postsubmit');
+/*app.get('/postsubmit', (req, res) => {
+    res.render('pages/postsubmit');
 });*/
 
-app.post('/postsubmit', upload.array('images', 5), body('title').trim().escape(), body('description').trim().escape(), async function (request, response, next) {
-    // req.files is array of `photos` files
-    // req.body will contain the text fields, if there were any
-    try {
-        request.files.forEach(file=>{
-            file['smallPathFilePart'] = smallImagePathPart + file.filename + '.webp';
-            file['mediumPathFilePart'] = mediumImagePathPart + file.filename + '.webp';
-            file['largePathFilePart'] = largeImagePathPart + file.filename + '.webp';
-            file['smallPathFile'] = smallImagePath + file.filename + '.webp';
-            file['mediumPathFile'] = mediumImagePath + file.filename + '.webp';
-            file['largePathFile'] = largeImagePath + file.filename + '.webp';
-        });
-        const post = new Post({
-            postDate: new Date(),
-            title: request.body.title,
-            description: request.body.description,
-            images: request.files,
-            author: 'Mark Foster'
-        });
-        await post.save();
-        await resizeImages(request.files);
-        response.render('pages/postpreview');
-    } catch(err) {
-        console.error('failed');
-        console.error(err);
+app.post('/postsubmit', upload.array('images', 5), body('title').trim().escape(), body('description').trim().escape(), async function (req, res, next) {
+    if (req.user) {
+        // req.files is array of `photos` files
+        // req.body will contain the text fields, if there were any
+        try {
+            req.files.forEach(file=>{
+                file['smallPathFilePart'] = smallImagePathPart + file.filename + '.webp';
+                file['mediumPathFilePart'] = mediumImagePathPart + file.filename + '.webp';
+                file['largePathFilePart'] = largeImagePathPart + file.filename + '.webp';
+                file['smallPathFile'] = smallImagePath + file.filename + '.webp';
+                file['mediumPathFile'] = mediumImagePath + file.filename + '.webp';
+                file['largePathFile'] = largeImagePath + file.filename + '.webp';
+            });
+            const post = new Post({
+                postDate: new Date(),
+                title: req.body.title,
+                description: req.body.description,
+                images: req.files,
+                author: 'Mark Foster'
+            });
+            await post.save();
+            await resizeImages(req.files);
+            res.render('pages/postpreview');
+        } catch(err) {
+            console.error('failed');
+            console.error(err);
+        }
+    } else {
+        res.redirect('/login');
     }
 });
 
