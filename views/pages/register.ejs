@@ -6,26 +6,42 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registration</title>
+    <link rel="stylesheet" href="/css/pico.min-dist.css">
+    <style>
+        @media (max-width: 500px) {
+            form {
+                width: 100%;
+                margin: auto;
+            }
+        }
+
+        form {
+            margin: auto;
+        }
+
+        form input {
+            width: 100%;
+        }
+    </style>
 </head>
 
 <body>
-    <% if (typeof errors !== 'undefined') { %>
-    <% errors.forEach(function(err){ %>
-    <p><%= err.msg %></p>
-    <% }) %>
-    <% } %>
-    <form action="/register" method="POST">
-        <h2>Register</h2>
-        <label for="name">Name</label>
-        <input type="text" name="name" required><br>
-        <label for="email">Email</label>
-        <input type="email" name="email" required><br>
-        <label for="password">Password</label>
-        <input type="password" name="password"><br>
-        <label for="passwordconfirm">Confirm Password</label>
-        <input type="password" name="passwordconfirm"><br>
-        <input type="submit" value="Register">
-    </form>
+    <div class="grid">
+        <% if (typeof errors !== 'undefined') { %>
+        <% errors.forEach(function(err){ %>
+        <p><%= err.msg %></p>
+        <% }) %>
+        <% } %>
+        <form action="/register" method="POST">
+            <h2>Register</h2>
+            <input type="text" name="name" required placeholder="Name" aria-label="Name">
+            <input type="email" name="email" required placeholder="Email address" aria-label="Email address">
+            <input type="password" name="password" required placeholder="Password" aria-label="Password">
+            <input type="password" name="passwordconfirm" required placeholder="Confirm Password"
+                aria-label="Confirm Password">
+            <input type="submit" value="Register">
+        </form>
+    </div>
 </body>
 
 </html>

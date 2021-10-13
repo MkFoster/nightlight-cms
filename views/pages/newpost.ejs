@@ -5,23 +5,44 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>New Post</title>
+    <link rel="stylesheet" href="/css/pico.min-dist.css">
+    <style>
+        @media (max-width: 500px) {
+            form {
+                width: 100%;
+                margin: auto;
+            }
+        }
+
+        @media (min-width: 501px) {
+
+            .grid>* {
+                min-width: 600px;
+            }
+        }
+
+        form {
+            margin: auto;
+        }
+
+        form input {
+            width: 100%;
+        }
+    </style>
 </head>
 
 <body>
-    <form action="/postsubmit" method="post" enctype="multipart/form-data">
-        <label for="files">Select files:</label>
-        <input type="file" id="images" name="images" multiple><br>
-
-        <label for="title">Title</label>
-        <input type="text" id="title" name="title"><br>
-
-        <label for="description">Description</label>
-        <input type="text" id="description" name="description">
-
-        <br>
-        <input type="submit">
-    </form>
+    <div class="grid">
+        <form action="/postsubmit" method="post" enctype="multipart/form-data">
+            <h2>New Post</h2>
+            <input type="file" id="images" name="images" placeholder="image" aria-label="Select image" required>
+            <input type="text" id="title" name="title" placeholder="Title" aria-label="Title" required>
+            <input type="text" id="description" name="description" placeholder="Description" aria-label="Description"
+                required>
+            <input type="submit">
+        </form>
+    </div>
 </body>
 
 </html>

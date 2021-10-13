@@ -8,7 +8,6 @@ const mongoose = require('mongoose');
 const flash = require('connect-flash');
 const sharp = require('sharp');
 const fs = require('fs');
-const util = require('util');
 
 require('dotenv').config({path: 'variables.env'});
 
@@ -129,24 +128,30 @@ app.post('/register',
     body('password').notEmpty().withMessage('Password Cannot be Blank!').isLength({ min: 8 }).withMessage('Password must be 8 to 40 characters.').isLength({ max: 40 }).withMessage('Password must be 8 to 40 characters.'),
     body('passwordconfirm').notEmpty().withMessage('Confirmed Password cannot be blank!'),
     async (req, res) => {
-        const result = validationResult(req);
-        if (!Array.isArray(result.errors)) {
-            result.errors = [];
+        //For now, only existing users can register new users.
+        if (req.user) {
+            const result = validationResult(req);
+            if (!Array.isArray(result.errors)) {
+                result.errors = [];
+            }
+            if (req.body.password !== req.body.passwordconfirm) {
+                result.errors.push({msg: 'The confirm password does not match.'});
+            }
+            if (result.errors.length > 0) {
+                console.log(result.errors.map(err => err.msg));
+                //req.flash('error', result.errors); //result.errors.map(err => err.msg)
+                res.render('pages/register', {title: 'Register', body: req.body, errors: result.errors});
+                //res.redirect('/register');
+                return; // stop the fn from running
+            }
+            const user = new User({name: req.body.name, email: req.body.email});
+            await user.setPassword(req.body.password);
+            await user.save();
+            res.redirect('/login');
+        } else {
+            res.redirect('/login');
         }
-        if (req.body.password !== req.body.passwordconfirm) {
-            result.errors.push({msg: 'The confirm password does not match.'});
-        }
-        if (result.errors.length > 0) {
-            console.log(result.errors.map(err => err.msg));
-            //req.flash('error', result.errors); //result.errors.map(err => err.msg)
-            res.render('pages/register', {title: 'Register', body: req.body, errors: result.errors});
-            //res.redirect('/register');
-            return; // stop the fn from running
-        }
-        const user = new User({name: req.body.name, email: req.body.email});
-        await user.setPassword(req.body.password);
-        await user.save();
-        res.redirect('/login');
+        
 });
 
 app.get('/newpost', (req, res) => {
@@ -183,7 +188,7 @@ app.post('/postsubmit', upload.array('images', 5), body('title').trim().escape()
             });
             await post.save();
             await resizeImages(req.files);
-            res.render('pages/postpreview');
+            res.redirect(`post/${post._id}`);
         } catch(err) {
             console.error('failed');
             console.error(err);
