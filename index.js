@@ -166,6 +166,8 @@ app.get('/newpost', (req, res) => {
     res.render('pages/postsubmit');
 });*/
 
+const sleep = require('util').promisify(setTimeout);
+
 app.post('/postsubmit', upload.array('images', 5), body('title').trim().escape(), body('description').trim().escape(), async function (req, res, next) {
     if (req.user) {
         // req.files is array of `photos` files
@@ -188,6 +190,8 @@ app.post('/postsubmit', upload.array('images', 5), body('title').trim().escape()
             });
             await post.save();
             await resizeImages(req.files);
+            //Hack to fix a bug with the image not being available in static quite yet.
+            await sleep(3000);
             res.redirect(`post/${post._id}`);
         } catch(err) {
             console.error('failed');
