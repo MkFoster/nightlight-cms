@@ -1,2 +1,2 @@
 # nightlight-cms
-A CMS focused on sharing photos from mobile devices.
+An image-first content management system for creators.
